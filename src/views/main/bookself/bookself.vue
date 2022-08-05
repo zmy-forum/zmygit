@@ -1,0 +1,201 @@
+<template>
+  <div class="myBooks">
+      <van-nav-bar
+        title="我的书架"
+        left-text="返回"
+        right-text="编辑"
+        left-arrow
+        @click-left="onClickLeft"
+        @click-right="showCheck"
+        />
+    <!-- <mt-header title="我的书架" class="book-header">
+      <router-link to="/home" slot="left">
+        <mt-button icon="back">返回</mt-button>
+      </router-link>
+      <mt-button slot="right" @click="showCheck" class="btn" ref="Btn" v-show="books.length">编辑</mt-button>
+    </mt-header> -->
+    <div class="addBooks" v-show="books.length<4">
+        <van-button type="primary" @click="goAdd">去添加</van-button>
+      <!-- <mt-button type="primary" @click="goAdd">去添加</mt-button> -->
+    </div>
+    <div class="book-list">
+      <div class="book-item" v-for="(book,index) in books" @click="goReadBooks(book.id)">
+        <mt-checklist :options="[option[index]]" v-model="value" ref="checklist" style="display: none" class="check">
+        </mt-checklist>
+        <div class="cover">
+          <img v-lazy="_unEscape(book.cover)">
+        </div>
+        <p class="name">{{book.title}}</p>
+      </div>
+    </div>
+    <div class="delete" ref="delete" style="opacity: 0">
+      <van-button type="primary" class="deleteBtn" ref="deleteBtn" @click="deleteBooks">删除({{value.length}})
+      </van-button>
+      <van-button type="default" class="deleteBtn" ref="qxBtn" @click="hideCheck">取消</van-button>
+    </div>
+  </div>
+</template>
+<script>
+import HeadTop from '../../../components/header/Head.vue'
+  export default{
+      components:{HeadTop},
+    data(){
+      return {
+        books: [],
+        option: [],
+        value: [],
+        isShowCheck: false
+      }
+    },
+    created(){
+      this.getBooks();
+    },
+    methods: {
+        onClickLeft() {
+                window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/');
+            },
+      goAdd(){
+        this.$router.push({
+          path: '/categories'
+        })
+      },
+      getBooks(){
+        let bookIdArray = [];
+        let localShelf = JSON.parse(window.localStorage.getItem('book')) ? JSON.parse(window.localStorage.getItem('book')) : {};
+        for (let i in localShelf) {
+          localShelf[i].cover = this._unEscape(localShelf[i].cover)
+          this.books.push(localShelf[i])
+          bookIdArray.push(i)
+        }
+        this.option = bookIdArray;
+        // console.log("kkkkkk",this.books)
+      },
+      _unEscape(str){
+        str = unescape(str).replace("/agent/", "")
+        return str
+      },
+      showCheck(){
+        this.isShowCheck = true;
+        let check = this.$refs.checklist;
+        this.$refs.delete.style.opacity = 1;
+        for (let i = 0; i < check.length; i++) {
+          check[i].$el.style.display = 'block'
+        }
+      },
+      hideCheck(){
+        let check = this.$refs.checklist;
+        this.$refs.delete.style.opacity = 0;
+        for (let i = 0; i < check.length; i++) {
+          check[i].$el.style.display = 'none'
+        }
+        this.isShowCheck = false
+      },
+      deleteBooks(){
+        let arr = this.value;
+        let storage = window.localStorage;
+        let localShelf = JSON.parse(storage.getItem('book')) ? JSON.parse(storage.getItem('book')) : {};
+        // console.log(localShelf)
+        arr.forEach((item, index) => {
+          delete localShelf[arr[index]]
+        });
+        storage.setItem('book', JSON.stringify(localShelf))
+        window.location.reload()
+      },
+      goReadBooks(id){
+        if (this.isShowCheck) {
+          return
+        }
+        this.$router.push({
+          path: `/readBook/${id}`
+        })
+      }
+    },
+  }
+</script>
+<style scoped lang="stylus">
+  .myBooks
+    position fixed
+    width 100%
+    height 100%
+    top 0
+    left 0
+    right 0
+    bottom 0
+    background #fff
+    overflow-y scroll
+    max-width: 750px; 
+    margin: 0 auto;
+    .book-header
+      height 100px
+      line-height 100px
+      font-size 25px
+      background #409eff
+      width 100%
+      z-index 10
+    .addBooks
+      position absolute
+      width 200px
+      height 80px
+      left 50%
+      top 60%
+      z-index 200
+      background #409eff
+      margin-left -100px
+      margin-top -80px
+      font-size 25px
+      border-radius 15px
+      button
+        width 100%
+        height 100%
+    .book-list
+      padding 20px
+      box-sizing border-box
+      overflow hidden
+      .book-item
+        float left
+        width 50%
+        overflow hidden
+        padding-right 15px
+        box-sizing border-box
+        text-align center
+        margin-bottom 20px
+        position relative
+        &:nth-child(4n)
+          padding-right 0
+        .cover
+          width 100%
+          background-position 50%
+          background-size 100%
+          img
+            width 100%
+            height 200px
+        .name
+          width 100%
+          margin-top 10px
+          font-size 15px
+          white-space nowrap
+          overflow hidden
+          text-overflow ellipsis
+  .btn
+    margin-right 10px
+  .check
+    position absolute
+    left 0
+    top 202px
+    width 100%;
+    height 100%
+    text-align left
+  .delete
+    position absolute
+    width 100%
+    height 80px
+    margin-bottom 50px
+    left 0
+    display flex
+    .deleteBtn
+      flex 1
+      height 80px
+      box-sizing border-box
+  .mint-button 
+    overflow visible !important
+</style>
